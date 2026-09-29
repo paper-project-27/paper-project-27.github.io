@@ -1,1 +1,1 @@
-Put selected image and video examples here; see ../../CASES.md for the matching slots in index.html.
+Selected generation-quality examples displayed on the PP-CFG project page. Images and videos are organized into `quality_images/` and `quality_videos/`.

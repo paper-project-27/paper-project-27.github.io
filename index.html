@@ -3,375 +3,285 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10182b">
-  <meta name="description" content="PP-CFG preserves adjustable classifier-free guidance and runtime negative prompts in few-step image and video generation.">
-  <title>PP-CFG-27 — Controllable Few-Step Image and Video Generation</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%2310182b'/%3E%3Cpath d='M9 13h10c5 0 7 3 7 7s-2 7-7 7H9m22-14h-6m6 0v14m-22-7h13' fill='none' stroke='%23f5f7fb' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M19 13v14' stroke='%23ed6964' stroke-width='3'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="PP-CFG enables adjustable classifier-free guidance and runtime negative prompts for few-step image and video generation.">
+  <title>PP-CFG: Polarity-Preserving Guidance for Controllable Few-Step Image and Video Generation</title>
   <style>
     :root {
       color-scheme: light;
-      --ink: #10182b;
-      --muted: #536078;
-      --line: #d9deea;
-      --paper: #f4f6fa;
-      --white: #fff;
-      --navy: #10182b;
-      --blue: #4169e8;
-      --blue-pale: #eaf0ff;
-      --coral: #d95258;
-      --coral-pale: #fff0ef;
-      --gold: #e6ad4c;
-      --max: 1200px;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --ink: #242424;
+      --muted: #666;
+      --rule: #dedede;
+      --link: #285a9f;
+      font-family: Arial, Helvetica, sans-serif;
       font-synthesis: none;
       text-rendering: optimizeLegibility;
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scroll-padding-top: 88px; }
-    body { margin: 0; color: var(--ink); background: var(--white); font-size: 1rem; line-height: 1.65; }
-    a { color: inherit; }
-    img, video { display: block; max-width: 100%; }
-    .wrap { width: min(calc(100% - 3rem), var(--max)); margin-inline: auto; }
-    .skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 10; padding: .65rem .9rem; color: var(--white); background: var(--navy); border-radius: .35rem; }
-    .skip-link:focus { top: 1rem; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: var(--ink); background: #fff; font-size: 1rem; line-height: 1.65; }
+    a { color: var(--link); }
+    img { display: block; max-width: 100%; height: auto; }
+    .page { width: min(100% - 40px, 980px); margin-inline: auto; }
+    .skip-link { position: absolute; left: 1rem; top: -4rem; padding: .6rem .85rem; color: #fff; background: #222; }
+    .skip-link:focus { top: 1rem; z-index: 2; }
 
-    .site-header { position: sticky; top: 0; z-index: 5; background: rgba(255,255,255,.94); border-bottom: 1px solid var(--line); backdrop-filter: blur(14px); }
-    .header-inner { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
-    .brand { display: inline-flex; align-items: center; gap: .72rem; text-decoration: none; font-weight: 800; letter-spacing: -.035em; }
-    .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; color: white; background: var(--navy); border-radius: 9px; font-size: .88rem; letter-spacing: -.08em; }
-    .brand-name { font-size: 1.08rem; }
-    .brand-name span { color: var(--blue); }
-    .nav { display: flex; align-items: center; gap: clamp(1rem, 2.7vw, 2.3rem); }
-    .nav a { color: #3e4960; text-decoration: none; font-size: .9rem; font-weight: 650; }
-    .nav a:hover, .nav a:focus-visible { color: var(--blue); }
-    .nav .paper-link { color: var(--ink); border-bottom: 1px solid var(--coral); padding-bottom: .15rem; }
+    .paper-header { padding: 58px 0 0; text-align: center; }
+    .venue { margin: 0 0 .9rem; color: var(--muted); font-size: .95rem; letter-spacing: .04em; }
+    h1 { max-width: 900px; margin: 0 auto; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2rem, 4.2vw, 3.15rem); line-height: 1.16; font-weight: 500; letter-spacing: -.025em; }
+    .authors { margin: 1.05rem 0 .2rem; color: #444; }
+    .affiliation { margin: 0; color: var(--muted); font-size: .92rem; }
+    .actions { display: flex; justify-content: center; gap: .65rem; margin: 1.35rem 0 0; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: .45rem 1.05rem; border-radius: 999px; color: #fff; background: #292929; text-decoration: none; font-size: .9rem; }
+    .button:hover, .button:focus-visible { background: #444; }
+    .button:focus-visible, a:focus-visible { outline: 3px solid #9bb9df; outline-offset: 3px; }
 
-    .hero { padding: clamp(3rem, 7vw, 6.6rem) 0 2.7rem; }
-    .hero-grid { display: grid; grid-template-columns: 1fr 1.02fr; gap: clamp(2rem, 5vw, 5rem); align-items: center; }
-    .eyebrow, .section-index { margin: 0 0 1rem; color: var(--blue); font-size: .78rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
-    h1, h2, h3, p { margin-top: 0; }
-    h1 { max-width: 720px; margin-bottom: .8rem; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.8rem, 5.3vw, 5rem); line-height: .99; letter-spacing: -.055em; font-weight: 500; }
-    h1 em { color: var(--blue); font-weight: 500; }
-    .full-title { max-width: 560px; margin: 0 0 1.3rem; color: var(--muted); font-size: clamp(1.05rem, 1.7vw, 1.28rem); line-height: 1.5; }
-    .hero-copy { max-width: 570px; margin-bottom: 1.6rem; color: #354158; font-size: 1.05rem; }
-    .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; }
-    .button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: .55rem; padding: .72rem 1rem; border: 1px solid var(--ink); border-radius: .4rem; text-decoration: none; font-size: .91rem; font-weight: 750; transition: transform .18s ease, background .18s ease; }
-    .button:hover { transform: translateY(-2px); }
-    .button-primary { color: var(--white); background: var(--navy); }
-    .button-primary:hover { background: #222e4a; }
-    .button-secondary { background: var(--white); }
-    .button-secondary:hover { background: var(--paper); }
-    .button svg { width: 16px; height: 16px; }
-    .hero-figure { margin: 0; padding: .65rem; background: var(--paper); border: 1px solid var(--line); border-radius: .6rem; box-shadow: 0 18px 50px rgba(16,24,43,.09); }
-    .hero-figure img { width: 100%; aspect-ratio: 1.31; object-fit: cover; border-radius: .28rem; }
-    figcaption { padding: .75rem .45rem .1rem; color: var(--muted); font-size: .83rem; line-height: 1.5; }
-    figcaption strong { color: var(--ink); }
+    .teaser { margin: 2.45rem auto 3rem; }
+    .teaser-scroll { padding: .2rem 0 .75rem; }
+    .teaser-grid { display: grid; grid-template-columns: minmax(0, 1fr); width: min(100%, 880px); margin-inline: auto; padding: .85rem; border: 1px solid var(--rule); border-radius: 8px; background: #fff; }
+    .teaser-cfg-headings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0 0 .45rem; color: var(--muted); font-size: .88rem; font-weight: 650; text-align: center; }
+    .teaser-row-order { margin: 0 0 .65rem; color: var(--muted); font-size: .78rem; line-height: 1.5; text-align: center; }
+    .teaser-row-order strong { color: #343a44; font-weight: 650; }
+    .teaser-comparison-video { display: block; width: 100%; height: auto; aspect-ratio: 13 / 10; border-radius: 4px; background: #111; }
+    figcaption { max-width: 850px; margin: .6rem auto 0; color: var(--muted); font-size: .88rem; line-height: 1.5; }
+    main { padding-bottom: 3rem; }
+    section { max-width: 900px; margin: 0 auto 3.2rem; }
+    h2 { margin: 0 0 .8rem; font-family: Georgia, "Times New Roman", serif; font-size: 1.8rem; line-height: 1.25; font-weight: 500; text-align: center; }
+    h3 { margin: 1.8rem 0 .55rem; font-size: 1.05rem; font-weight: 650; }
+    p { margin: 0 0 .9rem; }
+    .summary { max-width: 820px; margin-inline: auto; }
+    .method-figure { margin: 1.15rem auto .9rem; }
+    .method-figure img { width: 100%; }
+    .equation { margin: 1.1rem 0 .3rem; text-align: center; font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; }
+    .benchmark-copy, .result-copy { max-width: 820px; margin: 0 auto 1.2rem; }
+    .example-label { margin: .8rem 0 .35rem; color: var(--muted); font-size: .85rem; font-weight: 650; }
+    .example-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; max-width: 860px; margin: 0 auto; padding: 0 0 .8rem; }
+    .example-card { min-width: 0; margin: 0; padding: .9rem 1rem; border: 1px solid #e7e9ed; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgb(20 28 40 / 3%); }
+    .example-prompt { max-width: 820px; margin: 0 auto .8rem; color: #5c6370; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: .86rem; line-height: 1.58; letter-spacing: .005em; }
+    .example-prompt strong { display: inline-block; margin-right: .4rem; color: #8791a0; font-size: .69rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .quality-video { display: block; width: 100%; max-width: 820px; margin-inline: auto; aspect-ratio: 13 / 5; object-fit: cover; border-radius: 4px; background: #111; }
+    .quality-image-link { display: block; overflow: hidden; border: 1px solid var(--rule); border-radius: 4px; cursor: zoom-in; }
+    .quality-image-link:focus-visible { outline: 3px solid #9bb9df; outline-offset: 3px; }
+    .quality-image-frame { position: relative; display: block; width: 100%; overflow: hidden; aspect-ratio: 2600 / 550; background: #f8f9fb; }
+    .quality-image { position: absolute; top: -7.64%; left: 0; width: 100%; max-width: none; height: auto; }
+    .cfg-video-list { padding: .2rem 0 .75rem; }
+    .cfg-video-matrix { width: min(100%, 860px); margin-inline: auto; }
+    .cfg-video-method-headings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: .65rem 0 .2rem; color: var(--muted); font-size: .9rem; font-weight: 650; text-align: center; }
+    .cfg-video-row { margin: 0; padding: .75rem 0 .9rem; border-top: 1px solid var(--rule); }
+    .cfg-video-row h3 { margin: 0 0 .35rem; font-size: .95rem; }
+    .cfg-video-row video { display: block; width: 100%; height: auto; aspect-ratio: 26 / 5; border-radius: 4px; background: #111; }
+    .negative-examples-carousel { display: flex; gap: 1.1rem; overflow-x: auto; padding: .2rem 0 .85rem; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-color: #b8bec8 #f0f1f3; scrollbar-width: thin; }
+    .negative-example-card { flex: 0 0 100%; min-width: 0; margin: 0; padding: 1rem 1.1rem; border: 1px solid #e7e9ed; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgb(20 28 40 / 3%); scroll-snap-align: center; scroll-snap-stop: always; }
+    .negative-example-card img, .negative-example-card video { display: block; width: 100%; height: auto; border-radius: 4px; }
+    .negative-example-card img { border: 0; outline: 0; box-shadow: none; background: #fff; }
+    .negative-example-card video { aspect-ratio: 1664 / 960; object-fit: contain; background: #111; }
+    .paper-footer { padding: 1.4rem 0 2rem; border-top: 1px solid var(--rule); color: var(--muted); text-align: center; font-size: .85rem; }
 
-    .quick-facts { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 3.4rem; border-block: 1px solid var(--line); }
-    .fact { min-height: 98px; display: flex; align-items: center; gap: .9rem; padding: 1.15rem 1.35rem; }
-    .fact + .fact { border-left: 1px solid var(--line); }
-    .fact-num { color: var(--blue); font-family: Georgia, "Times New Roman", serif; font-size: 2rem; line-height: 1; }
-    .fact-label { color: #39455d; font-size: .9rem; line-height: 1.4; }
-    .fact-label strong { display: block; color: var(--ink); font-size: .93rem; }
-
-    .section { padding: clamp(4rem, 8vw, 7rem) 0; }
-    .section-tint { background: var(--paper); }
-    .section-head { max-width: 760px; margin-bottom: 2.1rem; }
-    .section-index { margin-bottom: .65rem; }
-    h2 { margin-bottom: .9rem; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.15rem, 4vw, 3.45rem); line-height: 1.07; letter-spacing: -.045em; font-weight: 500; }
-    .section-intro { max-width: 700px; margin: 0; color: var(--muted); font-size: 1.05rem; }
-    .method-figure { margin: 2.2rem 0 0; padding: clamp(.65rem, 2vw, 1.25rem); background: var(--white); border: 1px solid var(--line); border-radius: .55rem; }
-    .method-figure img { width: 100%; height: auto; }
-    .method-figure figcaption { padding: .95rem .35rem .15rem; }
-    .equation-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1.3rem; }
-    .equation-card { padding: 1.25rem 1.4rem; background: var(--white); border: 1px solid var(--line); border-radius: .45rem; }
-    .equation-card span { display: block; margin-bottom: .45rem; color: var(--muted); font-size: .84rem; }
-    .equation-card code { color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.2rem, 2.2vw, 1.6rem); white-space: normal; }
-    .method-note { margin: 1.15rem 0 0; padding: 1rem 1.15rem; color: #36435c; background: var(--blue-pale); border-left: 3px solid var(--blue); font-size: .94rem; }
-
-    .results-grid { display: grid; grid-template-columns: .88fr 1.12fr; gap: 1.2rem; align-items: stretch; }
-    .result-card { padding: clamp(1.3rem, 2.5vw, 2rem); background: var(--white); border: 1px solid var(--line); border-radius: .5rem; }
-    .result-card h3 { margin-bottom: .3rem; font-size: 1.15rem; letter-spacing: -.02em; }
-    .card-subtitle { min-height: 2.6em; margin-bottom: 1.25rem; color: var(--muted); font-size: .89rem; }
-    .metric-highlight { margin: 1.2rem 0 .5rem; color: var(--blue); font-family: Georgia, "Times New Roman", serif; font-size: clamp(3.2rem, 6vw, 5.2rem); line-height: .95; letter-spacing: -.06em; }
-    .metric-caption { margin: 0 0 1.35rem; color: #36435c; font-size: .9rem; }
-    .metric-row { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-top: 1px solid var(--line); color: #45516a; font-size: .88rem; }
-    .metric-row strong { color: var(--ink); font-size: .95rem; }
-    .metric-caveat { margin: 1rem 0 0; color: var(--muted); font-size: .84rem; }
-    .table-wrap { width: 100%; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: .88rem; }
-    caption { padding: 0 0 .75rem; color: var(--muted); text-align: left; font-size: .85rem; }
-    th, td { padding: .7rem .55rem; border-top: 1px solid var(--line); white-space: nowrap; }
-    th { color: var(--muted); font-size: .77rem; letter-spacing: .04em; text-transform: uppercase; }
-    td:first-child { font-weight: 650; }
-    tr.ours td:first-child { color: var(--blue); font-weight: 800; }
-    .table-note { margin: .85rem 0 0; color: var(--muted); font-size: .84rem; }
-    .subhead { margin: 3rem 0 1.1rem; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.8rem, 3.2vw, 2.55rem); line-height: 1.15; letter-spacing: -.04em; font-weight: 500; }
-    .removal-intro { max-width: 760px; margin-bottom: 1.3rem; color: var(--muted); }
-    .removal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
-    .removal-card { padding: 1.45rem; background: var(--white); border: 1px solid var(--line); border-radius: .5rem; }
-    .removal-card h3 { margin-bottom: .15rem; font-size: 1rem; }
-    .removal-meta { margin-bottom: 1.2rem; color: var(--muted); font-size: .82rem; }
-    .bar-row { display: grid; grid-template-columns: 5rem 1fr 3.5rem; align-items: center; gap: .7rem; margin: .8rem 0; font-size: .85rem; }
-    .bar-name { color: #45516a; }
-    .bar-track { height: 12px; overflow: hidden; background: #edf0f5; border-radius: 999px; }
-    .bar-fill { height: 100%; border-radius: inherit; }
-    .bar-fill.teacher { width: var(--value); background: #9aa4b5; }
-    .bar-fill.ours { width: var(--value); background: var(--coral); }
-    .bar-value { text-align: right; font-weight: 750; font-variant-numeric: tabular-nums; }
-    .protocol-note { margin-top: 1.2rem; padding: 1rem 1.15rem; color: #4a5367; background: #fff6e5; border-left: 3px solid var(--gold); font-size: .9rem; }
-
-    .case-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
-    .case-card { overflow: hidden; background: var(--white); border: 1px solid var(--line); border-radius: .5rem; }
-    .case-media { position: relative; min-height: 300px; display: grid; place-items: center; padding: 1.5rem; background-color: #eef2fa; background-image: linear-gradient(90deg, rgba(65,105,232,.06) 1px, transparent 1px), linear-gradient(rgba(65,105,232,.06) 1px, transparent 1px); background-size: 28px 28px; }
-    .case-media img, .case-media video { width: 100%; max-height: 440px; object-fit: contain; }
-    .case-card:nth-child(2) .case-media { background-color: #f7eff0; background-image: linear-gradient(90deg, rgba(217,82,88,.055) 1px, transparent 1px), linear-gradient(rgba(217,82,88,.055) 1px, transparent 1px); }
-    .case-empty { max-width: 280px; padding: 1.2rem; text-align: center; background: rgba(255,255,255,.86); border: 1px dashed #9ba8c2; border-radius: .45rem; }
-    .case-icon { width: 42px; height: 42px; margin: 0 auto .75rem; display: grid; place-items: center; color: var(--blue); background: var(--blue-pale); border-radius: 50%; }
-    .case-icon svg { width: 20px; height: 20px; }
-    .case-card:nth-child(2) .case-icon { color: var(--coral); background: var(--coral-pale); }
-    .case-empty strong { display: block; margin-bottom: .25rem; font-size: .94rem; }
-    .case-empty span { color: var(--muted); font-size: .82rem; }
-    .case-caption { display: flex; justify-content: space-between; align-items: center; gap: .7rem; padding: .95rem 1.05rem; }
-    .case-caption strong { font-size: .9rem; }
-    .case-tag { padding: .2rem .5rem; color: #46516a; background: var(--paper); border-radius: 999px; font-size: .73rem; font-weight: 750; letter-spacing: .06em; }
-    .case-note { max-width: 760px; margin: 1rem 0 0; color: var(--muted); font-size: .88rem; }
-
-    .benchmark-band { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: center; margin-top: 2rem; padding: clamp(1.5rem, 3vw, 2.3rem); color: var(--white); background: var(--navy); border-radius: .55rem; }
-    .benchmark-band h3 { margin-bottom: .6rem; font-family: Georgia, "Times New Roman", serif; font-size: 1.65rem; line-height: 1.15; font-weight: 500; }
-    .benchmark-band p { margin-bottom: 0; color: #d7deec; font-size: .93rem; }
-    .benchmark-count { display: flex; gap: 1.3rem; align-items: center; border-left: 1px solid rgba(255,255,255,.25); padding-left: 2rem; }
-    .benchmark-count strong { color: #9eb5ff; font-family: Georgia, "Times New Roman", serif; font-size: 3.3rem; font-weight: 500; line-height: 1; letter-spacing: -.05em; }
-    .benchmark-count span { max-width: 180px; color: #d7deec; font-size: .9rem; }
-
-    .footer { padding: 2.5rem 0; color: #d7deec; background: var(--navy); }
-    .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
-    .footer p { margin: 0; font-size: .86rem; }
-    .footer a { color: white; text-underline-offset: .18em; }
-    .footer-meta { color: #aab4c9; }
-
-    :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
-    @media (max-width: 880px) {
-      .hero-grid { grid-template-columns: 1fr; }
-      .hero-figure { max-width: 760px; }
-      .results-grid { grid-template-columns: 1fr; }
-    }
     @media (max-width: 640px) {
-      .wrap { width: min(calc(100% - 1.5rem), var(--max)); }
-      .header-inner { min-height: 62px; gap: .6rem; }
-      .nav { max-width: 68vw; gap: 1rem; overflow-x: auto; scrollbar-width: none; }
-      .nav::-webkit-scrollbar { display: none; }
-      .nav a { flex: 0 0 auto; font-size: .8rem; }
-      .nav a:nth-child(3) { display: none; }
-      .brand-name { font-size: .98rem; }
-      .hero { padding-top: 3rem; }
-      .hero-grid { gap: 1.7rem; }
-      h1 { font-size: clamp(2.65rem, 13vw, 4rem); }
-      .quick-facts { grid-template-columns: 1fr; margin-top: 2rem; }
-      .fact { min-height: 76px; padding: .85rem .6rem; }
-      .fact + .fact { border-left: 0; border-top: 1px solid var(--line); }
-      .equation-grid, .removal-grid, .case-grid, .benchmark-band { grid-template-columns: 1fr; }
-      .case-media { min-height: 245px; }
-      .benchmark-band { gap: 1.4rem; }
-      .benchmark-count { border-left: 0; border-top: 1px solid rgba(255,255,255,.25); padding: 1.3rem 0 0; }
-      .footer-inner { align-items: flex-start; flex-direction: column; gap: .8rem; }
-      .bar-row { grid-template-columns: 4.2rem 1fr 3.4rem; gap: .5rem; }
+      .page { width: min(100% - 28px, 980px); }
+      .paper-header { padding-top: 38px; }
+      .teaser { margin-top: 1.8rem; }
+      .teaser-grid { padding: .65rem; }
+      .teaser-cfg-headings { font-size: .82rem; }
+      .teaser-row-order { font-size: .7rem; }
+      .example-list { gap: .8rem; }
+      .example-card { padding: .75rem; }
+      .negative-examples-carousel { gap: .8rem; }
+      .negative-example-card { padding: .8rem; }
+      .example-prompt { font-size: .82rem; }
+      section { margin-bottom: 2.5rem; }
+      h2 { font-size: 1.55rem; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
-      *, *::before, *::after { transition-duration: .01ms !important; }
     }
   </style>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <header class="site-header">
-    <div class="wrap header-inner">
-      <a class="brand" href="#top" aria-label="PP-CFG-27 home">
-        <span class="brand-mark" aria-hidden="true">PP</span>
-        <span class="brand-name">PP<span>·</span>CFG<span>·</span>27</span>
-      </a>
-      <nav class="nav" aria-label="Main navigation">
-        <a href="#method">Method</a>
-        <a href="#results">Results</a>
-        <a href="#benchmark">NegElement-1K</a>
-        <a class="paper-link" href="assets/PP-CFG-paper.pdf">Paper PDF</a>
-      </nav>
-    </div>
-  </header>
-
-  <main id="main">
-    <section class="hero wrap" id="top" aria-labelledby="page-title">
-      <div class="hero-grid">
-        <div>
-          <p class="eyebrow">Research project · Image and video generation</p>
-          <h1 id="page-title">Keep guidance.<br><em>Keep control.</em></h1>
-          <p class="full-title">PP-CFG: Polarity-Preserving Guidance for Controllable Few-Step Image and Video Generation</p>
-          <p class="hero-copy">Few-step diffusion students often lose adjustable classifier-free guidance and selectable negative prompts. PP-CFG keeps both prompt roles available at inference by conditioning them on guidance scale and denoising time, then combining their visual responses in one shared stream.</p>
-          <div class="hero-actions">
-            <a class="button button-primary" href="assets/PP-CFG-paper.pdf" aria-label="Read the PP-CFG paper PDF">
-              Read the paper
-              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
-            <a class="button button-secondary" href="#method">Explore the method</a>
-          </div>
-        </div>
-        <figure class="hero-figure">
-          <img src="assets/cfg-sweep.jpg" alt="Wan2.1 video guidance-scale comparison at CFG 3, 5, and 7: teacher, PP-CFG, and negative-prompt examples">
-          <figcaption><strong>Guidance-scale sweep.</strong> Wan2.1-T2V-1.3B examples from the paper at CFG 3, 5, and 7.</figcaption>
-        </figure>
+  <div class="page">
+    <header class="paper-header">
+      <p class="venue">Under review at ICLR 2027</p>
+      <h1>PP-CFG: Polarity-Preserving Guidance for Controllable Few-Step Image and Video Generation</h1>
+      <p class="authors">Anonymous authors</p>
+      <p class="affiliation">Double-blind submission</p>
+      <div class="actions">
+        <a class="button" href="assets/PP-CFG-paper-figure5-panel-a-updated.pdf">Paper PDF</a>
       </div>
-      <div class="quick-facts" aria-label="Evaluation summary">
-        <div class="fact"><span class="fact-num">1</span><span class="fact-label"><strong>Shared visual stream</strong>One backbone pass per denoising step</span></div>
-        <div class="fact"><span class="fact-num">4</span><span class="fact-label"><strong>Video sampling steps</strong>Wan2.1 with DMD distillation</span></div>
-        <div class="fact"><span class="fact-num">8</span><span class="fact-label"><strong>Image sampling steps</strong>Qwen-Image with LCM or DMD</span></div>
-      </div>
-    </section>
+    </header>
 
-    <section class="section section-tint" id="method" aria-labelledby="method-title">
-      <div class="wrap">
-        <div class="section-head">
-          <p class="section-index">01 / Method</p>
-          <h2 id="method-title">Separate prompt roles.<br>Share the visual stream.</h2>
-          <p class="section-intro">At each denoising step, the Scale-Time Polarity Mixer refines positive and negative text conditions using the requested guidance scale and the current timestep. Polarity blocks combine the two attention responses before updating one visual state.</p>
+    <main id="main">
+    <figure class="teaser" aria-label="Video comparison across CFG scales and prompt settings">
+      <div class="teaser-scroll">
+        <div class="teaser-grid">
+          <div class="teaser-cfg-headings"><span>CFG = 3</span><span>CFG = 5</span><span>CFG = 7</span></div>
+          <p class="teaser-row-order"><strong>Rows top to bottom:</strong> Teacher · Ours · Teacher + negative prompt (“flame”) · Ours + negative prompt (“flame”)</p>
+          <video class="teaser-comparison-video" controls playsinline preload="metadata" aria-label="A 3 by 4 video grid comparing Teacher and PP-CFG at CFG 3, 5, and 7, with and without negative prompts">
+            <source src="assets/teaser-cfg-sweep-grid.mp4" type="video/mp4">
+          </video>
         </div>
+      </div>
+    </figure>
+
+      <section aria-labelledby="abstract-title">
+        <h2 id="abstract-title">Abstract</h2>
+        <div class="summary">
+          <p>Few-step distillation reduces sampling cost but can weaken adjustable classifier-free guidance (CFG) and runtime negative prompting. PP-CFG keeps positive and negative text conditions separate, then combines their attention responses with opposite signs in one shared visual stream. Its Scale-Time Polarity Mixer adapts each condition to the CFG scale and denoising time. The student retains runtime CFG and negative-prompt inputs with one visual backbone pass per step. We evaluate DMD-distilled PP-CFG on Wan2.1 video and both LCM- and DMD-distilled variants on Qwen-Image. PP-CFG reaches 81.46 VBench Total in four steps, reduces teacher-student video distances relative to step-distilled DMD, and improves target removal over the corresponding teachers on NegElement-1K.</p>
+        </div>
+      </section>
+
+      <section aria-labelledby="method-title">
+        <h2 id="method-title">Method</h2>
         <figure class="method-figure">
-          <img src="assets/framework.png" alt="PP-CFG architecture: guidance scale and timestep condition a polarity mixer; separate positive and negative contexts enter polarity blocks and their visual responses combine in a shared stream">
-          <figcaption><strong>PP-CFG architecture.</strong> The diagram shows the Qwen-Image joint-attention implementation; the paper also describes the Wan cross-attention implementation.</figcaption>
+          <img src="assets/framework_show_case_transparent.png" alt="PP-CFG architecture showing the Scale-Time Polarity Mixer, separate positive and negative contexts, and polarity blocks that combine visual responses">
         </figure>
-        <div class="equation-grid" aria-label="Core operations">
-          <div class="equation-card"><span>Scale and denoising time share one conditioning sequence</span><code>H<sub>g,t</sub> = H<sub>g</sub> + H<sub>t</sub></code></div>
-          <div class="equation-card"><span>Positive and negative visual responses meet inside the block</span><code>ΔH = ΔH<sup>+</sup> − λΔH<sup>−</sup></code></div>
+        <p class="summary">PP-CFG keeps positive and negative text conditions separate. The Scale-Time Polarity Mixer refines both using CFG scale and denoising time; Polarity Blocks combine their attention responses with opposite signs in one shared visual stream. This retains runtime negative prompting and adjustable CFG with one visual backbone pass per step.</p>
+        <p class="equation">ΔH = ΔH<sup>+</sup> − λΔH<sup>−</sup></p>
+      </section>
+
+      <section aria-labelledby="quality-title">
+        <h2 id="quality-title">Generation Quality</h2>
+        <h3>Video · Wan2.1-T2V-1.3B</h3>
+        <p class="example-label">Video examples</p>
+        <div class="example-list" role="region" aria-label="Video generation examples">
+          <figure class="example-card quality-video-card" data-media-slot="video" data-example-group="generation-quality">
+            <video class="quality-video" controls playsinline preload="metadata" aria-label="Dragon generation result"><source src="assets/cases/quality_videos/1_dragon_with_text.mp4" type="video/mp4">Your browser does not support MP4 video.</video>
+            <p class="example-prompt"><strong>Prompt:</strong> A colossal red dragon with iridescent scales perches on a jagged mountain peak. It spreads its massive wings and roars, breathing a stream of fire into the sky. Smoke billows around it. The camera circles around the dragon (orbital shot) to show the vast landscape below. 8k resolution, highly detailed.</p>
+          </figure>
+          <figure class="example-card quality-video-card" data-media-slot="video" data-example-group="generation-quality">
+            <video class="quality-video" controls playsinline preload="metadata" aria-label="Hummingbird generation result"><source src="assets/cases/quality_videos/2_hummingbird_with_text.mp4" type="video/mp4">Your browser does not support MP4 video.</video>
+            <p class="example-prompt"><strong>Prompt:</strong> A giant mechanical hummingbird hovers above a field of blooming sunflowers, its brass wings beating rapidly and reflecting the warm afternoon sunlight. Tiny gears rotate beneath its translucent metal feathers as golden pollen swirls through the air. The camera performs a slow orbital shot around the hummingbird. Steampunk fantasy, cinematic, highly detailed, 8k resolution.</p>
+          </figure>
+          <figure class="example-card quality-video-card" data-media-slot="video" data-example-group="generation-quality">
+            <video class="quality-video" controls playsinline preload="metadata" aria-label="Lighthouse generation result"><source src="assets/cases/quality_videos/3_lighthouse_with_text.mp4" type="video/mp4">Your browser does not support MP4 video.</video>
+            <p class="example-prompt"><strong>Prompt:</strong> A solitary lighthouse stands on a narrow cliff during a violent midnight storm. Enormous ocean waves crash against the rocks, sending white spray high into the air, while the lighthouse beam sweeps through heavy rain and fog. The camera rises from the turbulent water toward the top of the lighthouse in a dramatic crane shot. Photorealistic, cinematic lighting, 8k resolution.</p>
+          </figure>
+          <figure class="example-card quality-video-card" data-media-slot="video" data-example-group="generation-quality">
+            <video class="quality-video" controls playsinline preload="metadata" aria-label="Golem generation result"><source src="assets/cases/quality_videos/4_golem_with_text.mp4" type="video/mp4">Your browser does not support MP4 video.</video>
+            <p class="example-prompt"><strong>Prompt:</strong> A colossal stone golem awakens inside an overgrown temple ruin. Moss and vines fall from its shoulders as its glowing amber eyes open and massive stone fingers press against the ancient floor. Sunbeams penetrate the broken ceiling, illuminating clouds of dust. The camera slowly pulls back to reveal the golem's full scale. Epic fantasy, highly detailed, 8k resolution.</p>
+          </figure>
+          <figure class="example-card quality-video-card" data-media-slot="video" data-example-group="generation-quality">
+            <video class="quality-video" controls playsinline preload="metadata" aria-label="Motorcycle generation result"><source src="assets/cases/quality_videos/5_motorcycle_with_text.mp4" type="video/mp4">Your browser does not support MP4 video.</video>
+            <p class="example-prompt"><strong>Prompt:</strong> A futuristic motorcycle speeds across a mirror-like salt desert at sunset. Its glowing wheels leave trails of blue light while distant thunderclouds reflect perfectly on the wet ground. The rider leans sharply into a turn, spraying water outward in a wide arc. The camera chases from behind at low altitude in a fast tracking shot. Cinematic science fiction, photorealistic, 8k resolution.</p>
+          </figure>
+          <figure class="example-card quality-video-card" data-media-slot="video" data-example-group="generation-quality">
+            <video class="quality-video" controls playsinline preload="metadata" aria-label="Coffee ship generation result"><source src="assets/cases/quality_videos/6_coffee_ship_with_text.mp4" type="video/mp4">Your browser does not support MP4 video.</video>
+            <p class="example-prompt"><strong>Prompt:</strong> A miniature sailing ship navigates across the surface of a steaming cup of coffee. Foam waves crash against its wooden hull while giant sugar crystals rise like icy mountains in the background. The camera begins with an extreme macro close-up and slowly orbits around the ship. Whimsical surrealism, shallow depth of field, highly detailed, 8k resolution.</p>
+          </figure>
         </div>
-        <p class="method-note">The negative response is subtracted at the attention-feature level. The mixer receives the runtime guidance scale <em>g</em>; <em>λ</em> weights the negative attention response and has a different role. The two prompt paths add computation beyond an unguided pass.</p>
-      </div>
-    </section>
-
-    <section class="section" id="results" aria-labelledby="results-title">
-      <div class="wrap">
-        <div class="section-head">
-          <p class="section-index">02 / Quality and control</p>
-          <h2 id="results-title">Competitive quality in four or eight steps.</h2>
-          <p class="section-intro">The reported results cover Wan2.1 video generation with DMD and Qwen-Image with LCM or DMD. Scores below use each benchmark's stated 0–100 scale.</p>
+        <p class="result-copy">PP-CFG reaches 81.46 VBench Total in four steps (DMD: 80.66; AVD: 81.35; teacher: 80.13). DMD leads VBench Quality at 85.55, while ASD leads Semantic at 79.92.</p>
+        <h3>Image · Qwen-Image</h3>
+        <p class="example-label">Image examples</p>
+        <div class="example-list" role="region" aria-label="Image generation examples">
+          <figure class="example-card quality-image-card" data-media-slot="image" data-example-group="generation-quality">
+            <a class="quality-image-link" href="assets/cases/quality_images/038_broad_id00206_00001.png" target="_blank" rel="noopener" aria-label="Open full-resolution comparison for a photo of two sheeps">
+              <span class="quality-image-frame"><img class="quality-image" loading="lazy" src="assets/cases/quality_images/038_broad_id00206_00001.png" alt="Five-method image comparison for the prompt: a photo of two sheeps"></span>
+            </a>
+            <p class="example-prompt"><strong>Prompt:</strong> a photo of two sheeps</p>
+          </figure>
+          <figure class="example-card quality-image-card" data-media-slot="image" data-example-group="generation-quality">
+            <a class="quality-image-link" href="assets/cases/quality_images/052_id00012_00003.png" target="_blank" rel="noopener" aria-label="Open full-resolution comparison for a photo of a snowboard">
+              <span class="quality-image-frame"><img class="quality-image" loading="lazy" src="assets/cases/quality_images/052_id00012_00003.png" alt="Five-method image comparison for the prompt: a photo of a snowboard"></span>
+            </a>
+            <p class="example-prompt"><strong>Prompt:</strong> a photo of a snowboard</p>
+          </figure>
+          <figure class="example-card quality-image-card" data-media-slot="image" data-example-group="generation-quality">
+            <a class="quality-image-link" href="assets/cases/quality_images/055_id00013_00002.png" target="_blank" rel="noopener" aria-label="Open full-resolution comparison for a photo of a zebra">
+              <span class="quality-image-frame"><img class="quality-image" loading="lazy" src="assets/cases/quality_images/055_id00013_00002.png" alt="Five-method image comparison for the prompt: a photo of a zebra"></span>
+            </a>
+            <p class="example-prompt"><strong>Prompt:</strong> a photo of a zebra</p>
+          </figure>
+          <figure class="example-card quality-image-card" data-media-slot="image" data-example-group="generation-quality">
+            <a class="quality-image-link" href="assets/cases/quality_images/055_rank014_id00503_00002.png" target="_blank" rel="noopener" aria-label="Open full-resolution comparison for a photo of a blue cow and a black computer keyboard">
+              <span class="quality-image-frame"><img class="quality-image" loading="lazy" src="assets/cases/quality_images/055_rank014_id00503_00002.png" alt="Five-method image comparison for the prompt: a photo of a blue cow and a black computer keyboard"></span>
+            </a>
+            <p class="example-prompt"><strong>Prompt:</strong> a photo of a blue cow and a black computer keyboard</p>
+          </figure>
+          <figure class="example-card quality-image-card" data-media-slot="image" data-example-group="generation-quality">
+            <a class="quality-image-link" href="assets/cases/quality_images/068_broad_id00374_00003.png" target="_blank" rel="noopener" aria-label="Open full-resolution comparison for a photo of a dog right of a tie">
+              <span class="quality-image-frame"><img class="quality-image" loading="lazy" src="assets/cases/quality_images/068_broad_id00374_00003.png" alt="Five-method image comparison for the prompt: a photo of a dog right of a tie"></span>
+            </a>
+            <p class="example-prompt"><strong>Prompt:</strong> a photo of a dog right of a tie</p>
+          </figure>
+          <figure class="example-card quality-image-card" data-media-slot="image" data-example-group="generation-quality">
+            <a class="quality-image-link" href="assets/cases/quality_images/074_id00018_00001.png" target="_blank" rel="noopener" aria-label="Open full-resolution comparison for a photo of a motorcycle">
+              <span class="quality-image-frame"><img class="quality-image" loading="lazy" src="assets/cases/quality_images/074_id00018_00001.png" alt="Five-method image comparison for the prompt: a photo of a motorcycle"></span>
+            </a>
+            <p class="example-prompt"><strong>Prompt:</strong> a photo of a motorcycle</p>
+          </figure>
+          <figure class="example-card quality-image-card" data-media-slot="image" data-example-group="generation-quality">
+            <a class="quality-image-link" href="assets/cases/quality_images/089_rank023_id00519_00000.png" target="_blank" rel="noopener" aria-label="Open full-resolution comparison for a photo of a black bottle and a white refrigerator">
+              <span class="quality-image-frame"><img class="quality-image" loading="lazy" src="assets/cases/quality_images/089_rank023_id00519_00000.png" alt="Five-method image comparison for the prompt: a photo of a black bottle and a white refrigerator"></span>
+            </a>
+            <p class="example-prompt"><strong>Prompt:</strong> a photo of a black bottle and a white refrigerator</p>
+          </figure>
+          <figure class="example-card quality-image-card" data-media-slot="image" data-example-group="generation-quality">
+            <a class="quality-image-link" href="assets/cases/quality_images/099_rank025_id00526_00002.png" target="_blank" rel="noopener" aria-label="Open full-resolution comparison for a photo of an orange donut and a yellow stop sign">
+              <span class="quality-image-frame"><img class="quality-image" loading="lazy" src="assets/cases/quality_images/099_rank025_id00526_00002.png" alt="Five-method image comparison for the prompt: a photo of an orange donut and a yellow stop sign"></span>
+            </a>
+            <p class="example-prompt"><strong>Prompt:</strong> a photo of an orange donut and a yellow stop sign</p>
+          </figure>
         </div>
+        <p class="result-copy">At eight steps, PP-CFG-LCM scores 82.39 GenEval and 87.05 DPG-Bench, the highest among listed students. PP-CFG-DMD scores 80.22 and 86.98; the teacher remains higher on both metrics.</p>
+      </section>
 
-        <div class="results-grid">
-          <article class="result-card">
-            <h3>Video · Wan2.1-T2V-1.3B</h3>
-            <p class="card-subtitle">DMD distillation · 4 sampling steps · VBench</p>
-            <div class="metric-highlight">81.46</div>
-            <p class="metric-caption">VBench Total, the highest listed student score in the paper's comparison.</p>
-            <div class="metric-row"><span>Quality</span><strong>84.69</strong></div>
-            <div class="metric-row"><span>Semantic</span><strong>68.53</strong></div>
-            <p class="metric-caveat">The best submetric is not uniform: DMD scores higher on Quality, and ASD scores higher on Semantic.</p>
-          </article>
-
-          <article class="result-card">
-            <h3>Image · Qwen-Image</h3>
-            <p class="card-subtitle">Eight sampling steps · GenEval and DPG-Bench</p>
-            <div class="table-wrap">
-              <table>
-                <caption>Student comparison reported in the paper; higher is better.</caption>
-                <thead><tr><th scope="col">Method</th><th scope="col">GenEval</th><th scope="col">DPG</th></tr></thead>
-                <tbody>
-                  <tr><td>LCM (SD)</td><td>81.94</td><td>87.02</td></tr>
-                  <tr class="ours"><td>PP-CFG (LCM)</td><td>82.39</td><td>87.05</td></tr>
-                  <tr><td>DMD (SD)</td><td>80.72</td><td>86.71</td></tr>
-                  <tr class="ours"><td>PP-CFG (DMD)</td><td>80.22</td><td>86.98</td></tr>
-                </tbody>
-              </table>
+      <section aria-labelledby="cfg-adjustability-title">
+        <h2 id="cfg-adjustability-title">CFG Adjustability</h2>
+        <p class="benchmark-copy">Each row fixes CFG; columns show the Wan2.1 teacher, step-distilled DMD with external CFG, and PP-CFG.</p>
+        <div class="cfg-video-list" role="region" aria-label="CFG-scale video comparisons">
+          <div class="cfg-video-matrix">
+            <div class="cfg-video-method-headings" aria-hidden="true">
+              <span>Teacher</span><span>DMD</span><span>Ours</span>
             </div>
-            <p class="table-note">PP-CFG (LCM) leads the listed students on both metrics. The DMD variant improves DPG over DMD (SD), but not GenEval.</p>
-          </article>
-        </div>
-
-        <h3 class="subhead">Negative prompts can still remove a named target.</h3>
-        <p class="removal-intro">On NegElement-1K at CFG 4, the paper measures the fraction of generated samples judged to have the target absent. Higher rates indicate more target-absent samples under this protocol.</p>
-        <div class="removal-grid">
-          <article class="removal-card">
-            <h3>Image target removal</h3>
-            <p class="removal-meta">Qwen-Image · 8 steps each · 4,000 samples per method</p>
-            <div class="bar-row"><span class="bar-name">Teacher</span><div class="bar-track" aria-hidden="true"><div class="bar-fill teacher" style="--value:29.4%"></div></div><span class="bar-value">7.35%</span></div>
-            <div class="bar-row"><span class="bar-name">PP-CFG</span><div class="bar-track" aria-hidden="true"><div class="bar-fill ours" style="--value:48.32%"></div></div><span class="bar-value">12.08%</span></div>
-          </article>
-          <article class="removal-card">
-            <h3>Video target removal</h3>
-            <p class="removal-meta">Wan2.1 · 1,000 samples per method</p>
-            <div class="bar-row"><span class="bar-name">Teacher</span><div class="bar-track" aria-hidden="true"><div class="bar-fill teacher" style="--value:40.8%"></div></div><span class="bar-value">10.20%</span></div>
-            <div class="bar-row"><span class="bar-name">PP-CFG</span><div class="bar-track" aria-hidden="true"><div class="bar-fill ours" style="--value:88%"></div></div><span class="bar-value">22.00%</span></div>
-          </article>
-        </div>
-        <p class="protocol-note">The video comparison is not step-matched: PP-CFG uses four steps and the teacher uses 50. Removal success measures target absence in generated samples; it does not isolate the effect of enabling a negative prompt within the same model. Preservation annotations are not included in this score.</p>
-      </div>
-    </section>
-
-    <section class="section section-tint" id="benchmark" aria-labelledby="benchmark-title">
-      <div class="wrap">
-        <div class="section-head">
-          <p class="section-index">03 / Benchmark and examples</p>
-          <h2 id="benchmark-title">Matched image and video cases.</h2>
-          <p class="section-intro">NegElement-1K tests whether a specified element disappears while a related scene is generated in either modality.</p>
-        </div>
-
-        <div class="benchmark-band">
-          <div>
-            <h3>NegElement-1K</h3>
-            <p>Each template-generated case pairs an image prompt and a video prompt for the same scene with a negative prompt naming the target. Annotations also identify three scene elements to preserve, target position, size, and difficulty. A Qwen3.5-VL judge checks target presence; failed or unparseable judgments count as failures.</p>
+            <div class="cfg-video-row">
+              <h3>CFG = 1</h3>
+              <video controls playsinline preload="none" aria-label="CFG 1 video comparison: Teacher, DMD, and Ours from left to right."><source src="assets/cfg-adjustability-row-1.mp4" type="video/mp4">Your browser does not support MP4 video.</video>
+            </div>
+            <div class="cfg-video-row">
+              <h3>CFG = 3</h3>
+              <video controls playsinline preload="none" aria-label="CFG 3 video comparison: Teacher, DMD, and Ours from left to right."><source src="assets/cfg-adjustability-row-3.mp4" type="video/mp4">Your browser does not support MP4 video.</video>
+            </div>
+            <div class="cfg-video-row">
+              <h3>CFG = 5</h3>
+              <video controls playsinline preload="none" aria-label="CFG 5 video comparison: Teacher, DMD, and Ours from left to right."><source src="assets/cfg-adjustability-row-5.mp4" type="video/mp4">Your browser does not support MP4 video.</video>
+            </div>
+            <div class="cfg-video-row">
+              <h3>CFG = 7</h3>
+              <video controls playsinline preload="none" aria-label="CFG 7 video comparison: Teacher, DMD, and Ours from left to right."><source src="assets/cfg-adjustability-row-7.mp4" type="video/mp4">Your browser does not support MP4 video.</video>
+            </div>
+            <div class="cfg-video-row">
+              <h3>CFG = 9</h3>
+              <video controls playsinline preload="none" aria-label="CFG 9 video comparison: Teacher, DMD, and Ours from left to right."><source src="assets/cfg-adjustability-row-9.mp4" type="video/mp4">Your browser does not support MP4 video.</video>
+            </div>
           </div>
-          <div class="benchmark-count"><strong>1,000</strong><span>matched cases across ten balanced categories</span></div>
         </div>
+        <p class="result-copy">At CFG 3 and 7, PP-CFG's VideoMAE FVD to the teacher is 276 and 373, versus 387 and 605 for DMD (lower is closer).</p>
+      </section>
 
-        <h3 class="subhead">Example cases</h3>
-        <div class="case-grid">
-          <article class="case-card">
-            <div class="case-media" data-case-slot="image-01">
-              <div class="case-empty">
-                <span class="case-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4" width="17" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><circle cx="9" cy="9" r="1.5" fill="currentColor"/><path d="m5 17 5-5 3 3 2-2 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                <strong>Image example slot</strong>
-                <span>Add a selected image case when ready.</span>
-              </div>
-              <!-- Replace .case-empty with <img src="assets/cases/image-01.jpg" alt="Describe the case">. -->
-            </div>
-            <div class="case-caption"><strong>Image case 01</strong><span class="case-tag">IMAGE</span></div>
-          </article>
-          <article class="case-card">
-            <div class="case-media" data-case-slot="video-01">
-              <div class="case-empty">
-                <span class="case-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4" width="17" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="m10 8 5 4-5 4V8Z" fill="currentColor"/></svg></span>
-                <strong>Video example slot</strong>
-                <span>Add a selected video case when ready.</span>
-              </div>
-              <!-- Replace .case-empty with <video controls playsinline poster="assets/cases/video-01-poster.jpg"><source src="assets/cases/video-01.mp4" type="video/mp4"></video>. -->
-            </div>
-            <div class="case-caption"><strong>Video case 01</strong><span class="case-tag">VIDEO</span></div>
-          </article>
+      <section aria-labelledby="negative-title">
+        <h2 id="negative-title">Negative-Prompt Control</h2>
+        <p class="benchmark-copy">NegElement-1K tests 1,000 matched image and video cases across ten categories. Qwen3.5-VL judges target absence; failed or invalid judgments count as failures.</p>
+        <div class="negative-examples-carousel" role="region" aria-label="Negative-prompt image and video examples" tabindex="0">
+          <figure class="negative-example-card">
+            <img src="assets/negative_prompt_examples.png" alt="Image examples from Teacher and PP-CFG showing target deletion and semantic substitution for sunglasses, umbrellas, floor lamps, and paper cups.">
+          </figure>
+          <figure class="negative-example-card">
+            <video controls playsinline preload="metadata" aria-label="Negative-prompt video examples in a two by two grid: teacher cases on top, student cases below.">
+              <source src="assets/negative_prompt_videos_grid.mp4" type="video/mp4">
+              Your browser does not support MP4 video.
+            </video>
+          </figure>
         </div>
-        <p class="case-note">Selected image and video cases will be added here as the final examples are prepared.</p>
-      </div>
-    </section>
+        <h3>Image · Qwen-Image</h3>
+        <p class="result-copy">At CFG 4, PP-CFG removes the target in 12.08% of image samples, compared with 7.35% for the 8-step teacher (4,000 samples per model).</p>
+        <h3>Video · Wan2.1</h3>
+        <p class="result-copy">At CFG 4, video removal is 22.00% for PP-CFG (4 steps) and 10.20% for Wan (50 steps; 1,000 samples each), so the comparison is not step-matched.</p>
+        <p class="result-copy">These rates measure target absence, not preservation, and do not isolate the effect of enabling negative prompts within the same model.</p>
+      </section>
+    </main>
 
-    <section class="section" id="paper" aria-labelledby="paper-title">
-      <div class="wrap">
-        <div class="section-head">
-          <p class="section-index">04 / Paper</p>
-          <h2 id="paper-title">Read the full method and evaluation details.</h2>
-          <p class="section-intro">The manuscript includes implementation details, evaluation protocols, ablations, and additional examples.</p>
-        </div>
-        <a class="button button-primary" href="assets/PP-CFG-paper.pdf">
-          Download paper PDF
-          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 15v2h12v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
-        <p class="case-note">The manuscript copy is anonymized; author details are therefore not listed on this page.</p>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div class="wrap footer-inner">
-      <p><strong>PP-CFG-27</strong> · Controllable few-step image and video generation</p>
-      <p class="footer-meta">Project page accompanying the manuscript · <a href="assets/PP-CFG-paper.pdf">Paper PDF</a></p>
-    </div>
-  </footer>
+    <footer class="paper-footer">PP-CFG · Anonymous ICLR 2027 submission</footer>
+  </div>
 </body>
 </html>
